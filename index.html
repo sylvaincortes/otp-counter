@@ -134,12 +134,12 @@
     margin-bottom: 8px;
   }
 
-  .key-input-row {
+  .secret-input-row {
     display: flex;
     gap: 8px;
   }
 
-  #masterKey {
+  #totpSecret {
     flex: 1;
     min-width: 0;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -152,7 +152,7 @@
     color: var(--text);
   }
 
-  #masterKey:focus {
+  #totpSecret:focus {
     outline: 2px solid var(--accent);
     outline-offset: 1px;
   }
@@ -178,7 +178,7 @@
     outline-offset: 2px;
   }
 
-  .key-actions {
+  .secret-actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -438,28 +438,28 @@
   <div class="masthead">
     <span class="eyebrow">RFC 6238 · TOTP</span>
     <h1>OTP Counter</h1>
-    <p class="subtitle">Enter or generate a master key, then watch the OTP code refresh automatically right on this page.</p>
+    <p class="subtitle">Enter or generate a TOTP secret, then watch the OTP code refresh automatically right on this page.</p>
   </div>
 
   <div class="card">
     <div>
-      <label class="field-label" for="masterKey">Master key (Base32)</label>
-      <div class="key-input-row">
-        <input id="masterKey" type="password" placeholder="e.g. JBSW Y3DP EHPK 3PXP" autocomplete="off" spellcheck="false" autocapitalize="off" />
-        <button class="icon-btn" id="toggleVisibility" type="button" aria-label="Show key" aria-pressed="false">👁</button>
+      <label class="field-label" for="totpSecret">TOTP secret (Base32)</label>
+      <div class="secret-input-row">
+        <input id="totpSecret" type="password" placeholder="e.g. JBSW Y3DP EHPK 3PXP" autocomplete="off" spellcheck="false" autocapitalize="off" />
+        <button class="icon-btn" id="toggleVisibility" type="button" aria-label="Show secret" aria-pressed="false">👁</button>
       </div>
 
-      <div class="key-actions">
-        <button class="btn primary" id="generateKeyBtn" type="button">Generate random key</button>
-        <button class="btn" id="clearKeyBtn" type="button">Clear</button>
+      <div class="secret-actions">
+        <button class="btn primary" id="generateSecretBtn" type="button">Generate random secret</button>
+        <button class="btn" id="clearSecretBtn" type="button">Clear</button>
       </div>
       <label class="remember" style="margin-top:12px;">
-        <input type="checkbox" id="rememberKey" />
-        Remember this key on this device
+        <input type="checkbox" id="rememberSecret" />
+        Remember this secret on this device
       </label>
 
-      <p class="hint" id="keyHint">The key is Base32-encoded (A–Z, 2–7), the same format used by Google Authenticator or Microsoft Authenticator.</p>
-      <p class="error" id="keyError" hidden></p>
+      <p class="hint" id="secretHint">The secret is Base32-encoded (A–Z, 2–7), the same format used by Google Authenticator or Microsoft Authenticator.</p>
+      <p class="error" id="secretError" hidden></p>
     </div>
 
     <div class="divider"></div>
@@ -485,7 +485,7 @@
 
     <div class="empty-state" id="emptyState">
       <span class="glyph">···</span>
-      <p>Enter or generate a master key above to see the live OTP code.</p>
+      <p>Enter or generate a TOTP secret above to see the live OTP code.</p>
     </div>
 
     <details class="advanced">
@@ -513,7 +513,7 @@
 
   <footer>
     <span class="dot"></span>
-    <span>Everything is computed locally in your browser (Web Crypto API). Your master key is never sent to a server. Check "remember" to keep it only in this device's local storage.</span>
+    <span>Everything is computed locally in your browser (Web Crypto API). Your TOTP secret is never sent to a server. Check "remember" to keep it only in this device's local storage.</span>
   </footer>
 </div>
 
@@ -583,13 +583,13 @@
   }
 
   var els = {
-    masterKey: document.getElementById("masterKey"),
+    totpSecret: document.getElementById("totpSecret"),
     toggleVisibility: document.getElementById("toggleVisibility"),
-    generateKeyBtn: document.getElementById("generateKeyBtn"),
-    clearKeyBtn: document.getElementById("clearKeyBtn"),
-    rememberKey: document.getElementById("rememberKey"),
-    keyHint: document.getElementById("keyHint"),
-    keyError: document.getElementById("keyError"),
+    generateSecretBtn: document.getElementById("generateSecretBtn"),
+    clearSecretBtn: document.getElementById("clearSecretBtn"),
+    rememberSecret: document.getElementById("rememberSecret"),
+    secretHint: document.getElementById("secretHint"),
+    secretError: document.getElementById("secretError"),
     otpDisplay: document.getElementById("otpDisplay"),
     emptyState: document.getElementById("emptyState"),
     ringProgress: document.getElementById("ringProgress"),
@@ -623,9 +623,9 @@
   }
 
   function validateAndSync() {
-    var raw = els.masterKey.value;
-    els.keyError.hidden = true;
-    els.keyError.textContent = "";
+    var raw = els.totpSecret.value;
+    els.secretError.hidden = true;
+    els.secretError.textContent = "";
 
     if (!raw.trim()) {
       state.secretBytes = null;
@@ -636,8 +636,8 @@
     }
 
     if (/[^A-Za-z2-7\s]/.test(raw)) {
-      els.keyError.textContent = "Invalid characters: use only A–Z and 2–7 (Base32).";
-      els.keyError.hidden = false;
+      els.secretError.textContent = "Invalid characters: use only A–Z and 2–7 (Base32).";
+      els.secretError.hidden = false;
       state.secretBytes = null;
       els.otpDisplay.hidden = true;
       els.emptyState.hidden = false;
@@ -646,8 +646,8 @@
 
     var bytes = base32Decode(raw);
     if (bytes.length < 5) {
-      els.keyError.textContent = "Key is too short to generate a reliable OTP.";
-      els.keyError.hidden = false;
+      els.secretError.textContent = "Secret is too short to generate a reliable OTP.";
+      els.secretError.hidden = false;
       state.secretBytes = null;
       els.otpDisplay.hidden = true;
       els.emptyState.hidden = false;
@@ -700,26 +700,26 @@
         var mid = Math.ceil(otp.length / 2);
         els.otpCode.textContent = otp.slice(0, mid) + " " + otp.slice(mid);
       } catch (e) {
-        els.keyError.textContent = "OTP computation error: " + e.message;
-        els.keyError.hidden = false;
+        els.secretError.textContent = "OTP computation error: " + e.message;
+        els.secretError.hidden = false;
       } finally {
         state.computing = false;
       }
     }
   }
 
-  function generateRandomKey() {
+  function generateRandomSecret() {
     var bytes = new Uint8Array(20);
     crypto.getRandomValues(bytes);
     var encoded = base32Encode(bytes);
-    els.masterKey.value = formatGroups(encoded, 4);
+    els.totpSecret.value = formatGroups(encoded, 4);
     validateAndSync();
     persistIfRemembered();
   }
 
   function persistIfRemembered() {
-    if (els.rememberKey.checked) {
-      safeSet("otp_master_key", els.masterKey.value);
+    if (els.rememberSecret.checked) {
+      safeSet("totp_secret", els.totpSecret.value);
     }
   }
 
@@ -749,32 +749,32 @@
     }
   }
 
-  els.masterKey.addEventListener("input", function () {
+  els.totpSecret.addEventListener("input", function () {
     validateAndSync();
     persistIfRemembered();
   });
 
   els.toggleVisibility.addEventListener("click", function () {
-    var showing = els.masterKey.type === "text";
-    els.masterKey.type = showing ? "password" : "text";
+    var showing = els.totpSecret.type === "text";
+    els.totpSecret.type = showing ? "password" : "text";
     els.toggleVisibility.setAttribute("aria-pressed", String(!showing));
     els.toggleVisibility.textContent = showing ? "👁" : "🙈";
   });
 
-  els.generateKeyBtn.addEventListener("click", generateRandomKey);
+  els.generateSecretBtn.addEventListener("click", generateRandomSecret);
 
-  els.clearKeyBtn.addEventListener("click", function () {
-    els.masterKey.value = "";
-    els.rememberKey.checked = false;
-    safeRemove("otp_master_key");
+  els.clearSecretBtn.addEventListener("click", function () {
+    els.totpSecret.value = "";
+    els.rememberSecret.checked = false;
+    safeRemove("totp_secret");
     validateAndSync();
   });
 
-  els.rememberKey.addEventListener("change", function () {
-    if (els.rememberKey.checked) {
+  els.rememberSecret.addEventListener("change", function () {
+    if (els.rememberSecret.checked) {
       persistIfRemembered();
     } else {
-      safeRemove("otp_master_key");
+      safeRemove("totp_secret");
     }
   });
 
@@ -789,10 +789,10 @@
   els.copyBtn.addEventListener("click", copyCode);
 
   (function init() {
-    var saved = safeGet("otp_master_key");
+    var saved = safeGet("totp_secret");
     if (saved) {
-      els.masterKey.value = saved;
-      els.rememberKey.checked = true;
+      els.totpSecret.value = saved;
+      els.rememberSecret.checked = true;
       validateAndSync();
     }
     updateMeta();

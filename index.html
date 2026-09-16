@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="light dark" />
+<title>OTP Counter</title>
+<style>
+
+  :root {
+    --bg: #f3f5f8;
+    --surface: #ffffff;
+    --surface-2: #eaeef3;
+    --border: #d7dee7;
+    --text: #12161f;
+    --text-dim: #5b6472;
+    --accent: #0e7c7b;
+    --accent-soft: #d9f0ee;
+    --warn: #b45309;
+    --warn-soft: #fbead0;
+    --critical: #b91c1c;
+    --critical-soft: #fbe0e0;
+    --shadow: 0 1px 2px rgba(18, 22, 31, 0.04), 0 12px 32px -16px rgba(18, 22, 31, 0.18);
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b0e14;
+      --surface: #131826;
+      --surface-2: #1a2233;
+      --border: #2a3348;
+      --text: #e7ecf5;
+      --text-dim: #8a93a8;
+      --accent: #4fd1c5;
+      --accent-soft: #163634;
+      --warn: #f5a623;
+      --warn-soft: #3a2a10;
+      --critical: #f87171;
+      --critical-soft: #3a1414;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 20px 40px -20px rgba(0, 0, 0, 0.6);
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0b0e14;
+    --surface: #131826;
+    --surface-2: #1a2233;
+    --border: #2a3348;
+    --text: #e7ecf5;
+    --text-dim: #8a93a8;
+    --accent: #4fd1c5;
+    --accent-soft: #163634;
+    --warn: #f5a623;
+    --warn-soft: #3a2a10;
+    --critical: #f87171;
+    --critical-soft: #3a1414;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 20px 40px -20px rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background:
+      radial-gradient(circle at 1px 1px, var(--border) 1px, transparent 0) 0 0 / 22px 22px,
+      var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding-inline: 16px;
+    padding-block: 48px;
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .masthead {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-inline: 4px;
+  }
+
+  .eyebrow {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+
+  .subtitle {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .field-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+    margin-bottom: 8px;
+  }
+
+  .key-input-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  #masterKey {
+    flex: 1;
+    min-width: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    padding: 11px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+  }
+
+  #masterKey:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .icon-btn {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-dim);
+    font-size: 1.05rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .icon-btn:hover { color: var(--text); border-color: var(--accent); }
+  .icon-btn:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .key-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    margin-top: 12px;
+  }
+
+  .btn {
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 9px 14px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--surface);
+  }
+
+  .btn.primary:hover { filter: brightness(1.06); color: var(--surface); }
+
+  .remember {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+
+  .remember input { accent-color: var(--accent); }
+
+  .hint {
+    margin: 10px 2px 0;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .error {
+    margin: 10px 2px 0;
+    font-size: 0.82rem;
+    color: var(--critical);
+    font-weight: 500;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+  }
+
+  .otp-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding-top: 4px;
+  }
+
+  .ring-wrap {
+    position: relative;
+    width: 132px;
+    height: 132px;
+  }
+
+  .ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+
+  .ring-track {
+    fill: none;
+    stroke: var(--surface-2);
+    stroke-width: 8;
+  }
+
+  .ring-progress {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.25s linear, stroke 0.25s ease;
+  }
+
+  .ring-progress.warn { stroke: var(--warn); }
+  .ring-progress.critical { stroke: var(--critical); }
+
+  .ring-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  .ring-center span {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 1.6rem;
+    font-weight: 600;
+  }
+
+  .ring-center small {
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .code-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 2.6rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+
+  .copy-btn {
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 8px 13px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--accent);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .copy-btn:hover { border-color: var(--accent); }
+
+  .otp-meta {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 18px 0 6px;
+    text-align: center;
+    color: var(--text-dim);
+  }
+
+  .empty-state .glyph {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 2.2rem;
+    letter-spacing: 0.3em;
+    color: var(--border);
+  }
+
+  .empty-state p {
+    margin: 0;
+    font-size: 0.85rem;
+    max-width: 30ch;
+  }
+
+  details.advanced {
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+
+  details.advanced summary {
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  details.advanced summary::-webkit-details-marker { display: none; }
+
+  details.advanced summary::before {
+    content: "▸";
+    font-size: 0.7rem;
+    transition: transform 0.15s ease;
+  }
+
+  details.advanced[open] summary::before { transform: rotate(90deg); }
+
+  .advanced-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 14px;
+    margin-top: 14px;
+  }
+
+  .advanced-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.76rem;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+
+  .advanced-grid select,
+  .advanced-grid input {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.88rem;
+    padding: 8px 9px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+  }
+
+  footer {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding-inline: 6px;
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  footer .dot {
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-top: 6px;
+  }
+
+  [hidden] { display: none !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ring-progress { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="masthead">
+    <span class="eyebrow">RFC 6238 · TOTP</span>
+    <h1>OTP Counter</h1>
+    <p class="subtitle">Enter or generate a master key, then watch the OTP code refresh automatically right on this page.</p>
+  </div>
+
+  <div class="card">
+    <div>
+      <label class="field-label" for="masterKey">Master key (Base32)</label>
+      <div class="key-input-row">
+        <input id="masterKey" type="password" placeholder="e.g. JBSW Y3DP EHPK 3PXP" autocomplete="off" spellcheck="false" autocapitalize="off" />
+        <button class="icon-btn" id="toggleVisibility" type="button" aria-label="Show key" aria-pressed="false">👁</button>
+      </div>
+
+      <div class="key-actions">
+        <button class="btn primary" id="generateKeyBtn" type="button">Generate random key</button>
+        <button class="btn" id="clearKeyBtn" type="button">Clear</button>
+      </div>
+      <label class="remember" style="margin-top:12px;">
+        <input type="checkbox" id="rememberKey" />
+        Remember this key on this device
+      </label>
+
+      <p class="hint" id="keyHint">The key is Base32-encoded (A–Z, 2–7), the same format used by Google Authenticator or Microsoft Authenticator.</p>
+      <p class="error" id="keyError" hidden></p>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="otp-display" id="otpDisplay" hidden>
+      <div class="ring-wrap">
+        <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+          <circle class="ring-progress" id="ringProgress" cx="60" cy="60" r="52"></circle>
+        </svg>
+        <div class="ring-center">
+          <span id="secondsLeft">30</span>
+          <small>seconds</small>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code" id="otpCode" aria-live="polite">000 000</div>
+        <button class="copy-btn" id="copyBtn" type="button">Copy</button>
+      </div>
+      <p class="otp-meta" id="otpMeta">SHA-1 · 6 digits · 30s period</p>
+    </div>
+
+    <div class="empty-state" id="emptyState">
+      <span class="glyph">···</span>
+      <p>Enter or generate a master key above to see the live OTP code.</p>
+    </div>
+
+    <details class="advanced">
+      <summary>Advanced options</summary>
+      <div class="advanced-grid">
+        <label for="algoSelect">Algorithm
+          <select id="algoSelect">
+            <option value="SHA-1" selected>SHA-1</option>
+            <option value="SHA-256">SHA-256</option>
+            <option value="SHA-512">SHA-512</option>
+          </select>
+        </label>
+        <label for="digitsSelect">Digits
+          <select id="digitsSelect">
+            <option value="6" selected>6</option>
+            <option value="8">8</option>
+          </select>
+        </label>
+        <label for="periodInput">Period (s)
+          <input type="number" id="periodInput" value="30" min="10" max="120" step="1" />
+        </label>
+      </div>
+    </details>
+  </div>
+
+  <footer>
+    <span class="dot"></span>
+    <span>Everything is computed locally in your browser (Web Crypto API). Your master key is never sent to a server. Check "remember" to keep it only in this device's local storage.</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var B32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+  function base32Decode(input) {
+    var cleaned = input.toUpperCase().replace(/[^A-Z2-7]/g, "");
+    if (!cleaned) return new Uint8Array(0);
+    var bits = "";
+    for (var i = 0; i < cleaned.length; i++) {
+      var val = B32_ALPHABET.indexOf(cleaned[i]);
+      bits += val.toString(2).padStart(5, "0");
+    }
+    var bytes = [];
+    for (var j = 0; j + 8 <= bits.length; j += 8) {
+      bytes.push(parseInt(bits.substr(j, 8), 2));
+    }
+    return new Uint8Array(bytes);
+  }
+
+  function base32Encode(bytes) {
+    var bits = "";
+    for (var i = 0; i < bytes.length; i++) {
+      bits += bytes[i].toString(2).padStart(8, "0");
+    }
+    var out = "";
+    for (var j = 0; j < bits.length; j += 5) {
+      var chunk = bits.substr(j, 5);
+      if (chunk.length < 5) chunk = chunk.padEnd(5, "0");
+      out += B32_ALPHABET[parseInt(chunk, 2)];
+    }
+    return out;
+  }
+
+  function formatGroups(str, size) {
+    var out = [];
+    for (var i = 0; i < str.length; i += size) out.push(str.substr(i, size));
+    return out.join(" ");
+  }
+
+  async function computeTOTP(secretBytes, counter, algo, digits) {
+    var buf = new ArrayBuffer(8);
+    var view = new DataView(buf);
+    view.setUint32(0, Math.floor(counter / 4294967296), false);
+    view.setUint32(4, counter % 4294967296, false);
+    var key = await crypto.subtle.importKey(
+      "raw",
+      secretBytes,
+      { name: "HMAC", hash: algo },
+      false,
+      ["sign"]
+    );
+    var sig = await crypto.subtle.sign("HMAC", key, buf);
+    var h = new Uint8Array(sig);
+    var offset = h[h.length - 1] & 0xf;
+    var binCode =
+      ((h[offset] & 0x7f) << 24) |
+      ((h[offset + 1] & 0xff) << 16) |
+      ((h[offset + 2] & 0xff) << 8) |
+      (h[offset + 3] & 0xff);
+    var otp = (binCode % Math.pow(10, digits)).toString().padStart(digits, "0");
+    return otp;
+  }
+
+  var els = {
+    masterKey: document.getElementById("masterKey"),
+    toggleVisibility: document.getElementById("toggleVisibility"),
+    generateKeyBtn: document.getElementById("generateKeyBtn"),
+    clearKeyBtn: document.getElementById("clearKeyBtn"),
+    rememberKey: document.getElementById("rememberKey"),
+    keyHint: document.getElementById("keyHint"),
+    keyError: document.getElementById("keyError"),
+    otpDisplay: document.getElementById("otpDisplay"),
+    emptyState: document.getElementById("emptyState"),
+    ringProgress: document.getElementById("ringProgress"),
+    secondsLeft: document.getElementById("secondsLeft"),
+    otpCode: document.getElementById("otpCode"),
+    otpMeta: document.getElementById("otpMeta"),
+    copyBtn: document.getElementById("copyBtn"),
+    algoSelect: document.getElementById("algoSelect"),
+    digitsSelect: document.getElementById("digitsSelect"),
+    periodInput: document.getElementById("periodInput")
+  };
+
+  var RING_CIRCUMFERENCE = 2 * Math.PI * 52;
+  els.ringProgress.style.strokeDasharray = RING_CIRCUMFERENCE.toFixed(2);
+
+  var state = {
+    secretBytes: null,
+    lastCounter: null,
+    computing: false,
+    currentCode: ""
+  };
+
+  function safeGet(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+  function safeSet(key, val) {
+    try { localStorage.setItem(key, val); } catch (e) {}
+  }
+  function safeRemove(key) {
+    try { localStorage.removeItem(key); } catch (e) {}
+  }
+
+  function validateAndSync() {
+    var raw = els.masterKey.value;
+    els.keyError.hidden = true;
+    els.keyError.textContent = "";
+
+    if (!raw.trim()) {
+      state.secretBytes = null;
+      state.lastCounter = null;
+      els.otpDisplay.hidden = true;
+      els.emptyState.hidden = false;
+      return;
+    }
+
+    if (/[^A-Za-z2-7\s]/.test(raw)) {
+      els.keyError.textContent = "Invalid characters: use only A–Z and 2–7 (Base32).";
+      els.keyError.hidden = false;
+      state.secretBytes = null;
+      els.otpDisplay.hidden = true;
+      els.emptyState.hidden = false;
+      return;
+    }
+
+    var bytes = base32Decode(raw);
+    if (bytes.length < 5) {
+      els.keyError.textContent = "Key is too short to generate a reliable OTP.";
+      els.keyError.hidden = false;
+      state.secretBytes = null;
+      els.otpDisplay.hidden = true;
+      els.emptyState.hidden = false;
+      return;
+    }
+
+    state.secretBytes = bytes;
+    state.lastCounter = null;
+    els.otpDisplay.hidden = false;
+    els.emptyState.hidden = true;
+    updateMeta();
+    tick(true);
+  }
+
+  function updateMeta() {
+    var algo = els.algoSelect.value;
+    var digits = els.digitsSelect.value;
+    var period = els.periodInput.value;
+    els.otpMeta.textContent = algo + " · " + digits + " digits · " + period + "s period";
+  }
+
+  async function tick(force) {
+    var period = Math.max(10, parseInt(els.periodInput.value, 10) || 30);
+    var now = Date.now() / 1000;
+    var counter = Math.floor(now / period);
+    var remaining = period - Math.floor(now % period);
+
+    var fraction = remaining / period;
+    els.ringProgress.style.strokeDashoffset = (RING_CIRCUMFERENCE * (1 - fraction)).toFixed(2);
+    els.secondsLeft.textContent = remaining;
+
+    els.ringProgress.classList.remove("warn", "critical");
+    if (remaining <= 3) {
+      els.ringProgress.classList.add("critical");
+    } else if (remaining <= 8) {
+      els.ringProgress.classList.add("warn");
+    }
+
+    if (!state.secretBytes) return;
+
+    if (force || counter !== state.lastCounter) {
+      if (state.computing) return;
+      state.computing = true;
+      state.lastCounter = counter;
+      var digits = parseInt(els.digitsSelect.value, 10);
+      var algo = els.algoSelect.value;
+      try {
+        var otp = await computeTOTP(state.secretBytes, counter, algo, digits);
+        state.currentCode = otp;
+        var mid = Math.ceil(otp.length / 2);
+        els.otpCode.textContent = otp.slice(0, mid) + " " + otp.slice(mid);
+      } catch (e) {
+        els.keyError.textContent = "OTP computation error: " + e.message;
+        els.keyError.hidden = false;
+      } finally {
+        state.computing = false;
+      }
+    }
+  }
+
+  function generateRandomKey() {
+    var bytes = new Uint8Array(20);
+    crypto.getRandomValues(bytes);
+    var encoded = base32Encode(bytes);
+    els.masterKey.value = formatGroups(encoded, 4);
+    validateAndSync();
+    persistIfRemembered();
+  }
+
+  function persistIfRemembered() {
+    if (els.rememberKey.checked) {
+      safeSet("otp_master_key", els.masterKey.value);
+    }
+  }
+
+  function copyCode() {
+    if (!state.currentCode) return;
+    var restore = els.copyBtn.textContent;
+    function done(ok) {
+      els.copyBtn.textContent = ok ? "Copied!" : "Failed";
+      setTimeout(function () { els.copyBtn.textContent = restore; }, 1400);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(state.currentCode).then(function () { done(true); }, function () { done(false); });
+    } else {
+      try {
+        var ta = document.createElement("textarea");
+        ta.value = state.currentCode;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        done(true);
+      } catch (e) {
+        done(false);
+      }
+    }
+  }
+
+  els.masterKey.addEventListener("input", function () {
+    validateAndSync();
+    persistIfRemembered();
+  });
+
+  els.toggleVisibility.addEventListener("click", function () {
+    var showing = els.masterKey.type === "text";
+    els.masterKey.type = showing ? "password" : "text";
+    els.toggleVisibility.setAttribute("aria-pressed", String(!showing));
+    els.toggleVisibility.textContent = showing ? "👁" : "🙈";
+  });
+
+  els.generateKeyBtn.addEventListener("click", generateRandomKey);
+
+  els.clearKeyBtn.addEventListener("click", function () {
+    els.masterKey.value = "";
+    els.rememberKey.checked = false;
+    safeRemove("otp_master_key");
+    validateAndSync();
+  });
+
+  els.rememberKey.addEventListener("change", function () {
+    if (els.rememberKey.checked) {
+      persistIfRemembered();
+    } else {
+      safeRemove("otp_master_key");
+    }
+  });
+
+  [els.algoSelect, els.digitsSelect, els.periodInput].forEach(function (el) {
+    el.addEventListener("change", function () {
+      updateMeta();
+      state.lastCounter = null;
+      tick(true);
+    });
+  });
+
+  els.copyBtn.addEventListener("click", copyCode);
+
+  (function init() {
+    var saved = safeGet("otp_master_key");
+    if (saved) {
+      els.masterKey.value = saved;
+      els.rememberKey.checked = true;
+      validateAndSync();
+    }
+    updateMeta();
+    setInterval(tick, 1000);
+  })();
+})();
+</script>
+
+</body>
+</html>
